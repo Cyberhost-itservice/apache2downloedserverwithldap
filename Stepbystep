@@ -1,0 +1,51 @@
+Download Server with Ldap connection 
+
+1. Install the required Apache modules and LDAP utilities:
+sudo apt update
+sudo apt install apache2 libapache2-mod-authnz-external pwauth ldap-utils
+
+2. Enable the necessary Apache modules:
+sudo a2enmod authnz_external authnz_ldap
+
+3. Create an Apache configuration file for the download server:
+sudo nano /etc/apache2/sites-available/download.conf
+
+4. Inside the <VirtualHost> block, add the following lines to configure LDAP authentication:
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/downloads
+
+    <Directory /var/www/html/downloads>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride All
+        AuthType Basic
+        AuthName "Restricted Content"
+        AuthBasicProvider external
+        AuthExternal pwauth
+        AuthLDAPURL "ldap://your-ldap-server-address:389/dc=example,dc=com?uid"
+        AuthLDAPBindDN "cn=admin,dc=example,dc=com"
+        AuthLDAPBindPassword "your-ldap-password"
+        Require valid-user
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+
+
+4 INFO : Replace the following LDAP-related values with your own LDAP server information:
+
+    your-ldap-server-address: Replace with the address of your LDAP server.
+    dc=example,dc=com: Replace with the base DN of your LDAP directory.
+    cn=admin,dc=example,dc=com: Replace with the bind DN for your LDAP server administrator.
+    your-ldap-password: Replace with the password for the LDAP server administrator.
+    
+5.Enable the new virtual host configuration:
+sudo a2ensite download.conf
+
+6.Disable the default Apache virtual host:
+sudo a2dissite 000-default.conf
+
+7. Restart Apache to apply the changes:
+sudo systemctl restart apache2
